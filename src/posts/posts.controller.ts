@@ -5,6 +5,8 @@ import {
   UploadedFile,
   UseInterceptors,
   Request,
+  Get,
+  Param,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
@@ -12,6 +14,8 @@ import { FileSizeValidationPipe } from './pipe/file.validate.pipe';
 import { PostsService } from './posts.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CreatePostInputDto } from './dto/post.create.dto';
+import { ParseObjectIdPipe } from 'src/utilities/parse-object-id-pipe.pipe';
+import { ObjectId } from 'mongoose';
 
 @Controller('posts')
 export class PostsController {
@@ -34,5 +38,10 @@ export class PostsController {
       imagen_url: image.secure_url,
       imagen_id: image.public_id,
     });
+  }
+
+  @Get(':idPost')
+  async getOnePostById(@Param('idPost', ParseObjectIdPipe) id: ObjectId) {
+    return this.postService.findOnePostById(id);
   }
 }
