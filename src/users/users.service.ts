@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 import { User } from 'src/schemas/user.schema';
 import { CreateUserDto } from './dto/user.create.dto';
 import * as bcrypt from 'bcrypt';
@@ -22,5 +22,9 @@ export class UsersService {
 
   async findOneUserByUsername(value: string): Promise<userInterface | any> {
     return await this.userModel.findOne({ username: value });
+  }
+
+  async findOneUserById(id: ObjectId): Promise<userInterface | any> {
+    return await this.userModel.findById(id);
   }
 }
