@@ -44,4 +44,10 @@ export class PostsController {
   async getOnePostById(@Param('idPost', ParseObjectIdPipe) id: ObjectId) {
     return this.postService.findOnePostById(id);
   }
+
+  @Get('posts')
+  async allPosts() {
+    console.log('Hola Mundo');
+    return this.postService.allPosts();
+  }
 }
