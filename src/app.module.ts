@@ -7,6 +7,8 @@ import { AuthModule } from './auth/auth.module';
 import { PostsModule } from './posts/posts.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { BookmarkModule } from './bookmark/bookmark.module';
+import { CommentModule } from './comment/comment.module';
+import { LikesModule } from './likes/likes.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { BookmarkModule } from './bookmark/bookmark.module';
     PostsModule,
     CloudinaryModule,
     BookmarkModule,
+    CommentModule,
+    LikesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
