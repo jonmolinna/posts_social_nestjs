@@ -40,14 +40,13 @@ export class PostsController {
     });
   }
 
+  @Get('posts')
+  async allPostss() {
+    return this.postService.allPosts();
+  }
+
   @Get(':idPost')
   async getOnePostById(@Param('idPost', ParseObjectIdPipe) id: ObjectId) {
     return this.postService.findOnePostById(id);
-  }
-
-  @Get('posts')
-  async allPosts() {
-    console.log('Hola Mundo');
-    return this.postService.allPosts();
   }
 }

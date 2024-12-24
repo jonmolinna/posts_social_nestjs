@@ -27,21 +27,23 @@ export class PostsService {
   }
 
   async findOnePostById(id: ObjectId): Promise<Post | any> {
-    return this.postModel
-      .findById(id)
-      .populate('user', '-password')
-      .populate({ path: 'bookMarks.user', select: '-password' })
-      .populate({ path: 'comments.user', select: '-password' })
-      .populate({ path: 'likes.user', select: '-password' });
+    return (
+      this.postModel
+        .findById(id)
+        .populate('user', '-password')
+        // .populate({ path: 'bookMarks.user', select: '-password' })
+        .populate({ path: 'comments.user', select: '-password' })
+    );
+    // .populate({ path: 'likes.user', select: '-password' });
   }
 
   async allPosts(): Promise<PostDocument[]> {
     return await this.postModel
       .find()
       .populate('user', '-password')
-      .populate({ path: 'bookMarks.user', select: '-password' })
+      // .populate({ path: 'bookMarks.user', select: '-password' })
       .populate({ path: 'comments.user', select: '-password' })
-      .populate({ path: 'likes.user', select: '-password' })
+      // .populate({ path: 'likes.user', select: '-password' })
       .sort({ createdAt: -1 });
   }
 
@@ -51,12 +53,16 @@ export class PostsService {
       throw new NotFoundException('No se encontro el post');
     }
 
-    const book: BookMarkDocument = await this.booKMarkModel.findOne({
+    const bookMark: BookMarkDocument = await this.booKMarkModel.findOne({
       user: dto.user,
+      post: dto.post,
     });
 
-    if (book) {
-      const response = await this.booKMarkModel.deleteOne({ user: book.user });
+    if (bookMark) {
+      const response = await this.booKMarkModel.deleteOne({
+        user: bookMark.user,
+        post: bookMark.post,
+      });
       if (response.deletedCount > 0) {
         await this.postModel.findByIdAndUpdate(
           {
@@ -65,29 +71,27 @@ export class PostsService {
           {
             $pull: {
               bookMarks: {
-                user: book.user,
+                user: bookMark.user,
               },
             },
           },
         );
-        return {
-          status: HttpStatus.OK,
-          data: book,
-        };
+        return bookMark;
       }
     } else {
       const user: UserDocument = await this.usersService.findOneUserById(
         dto.user,
       );
 
-      const bookMark = await this.booKMarkModel.create({ user: user.id });
+      const bookMark = await this.booKMarkModel.create({
+        user: user.id,
+        post: post.id,
+      });
+
       post.bookMarks.push(bookMark);
       await post.save();
-      const response = await bookMark.populate('user', '-password');
-      return {
-        status: HttpStatus.CREATED,
-        data: response,
-      };
+
+      return bookMark;
     }
   }
 
@@ -164,10 +168,16 @@ export class PostsService {
       throw new NotFoundException('No se encontro el post');
     }
 
-    const like: LikeDocument = await this.likeModel.findOne({ user: dto.user });
+    const like: LikeDocument = await this.likeModel.findOne({
+      user: dto.user,
+      post: dto.post,
+    });
 
     if (like) {
-      const response = await this.likeModel.deleteOne({ user: like.user });
+      const response = await this.likeModel.deleteOne({
+        user: like.user,
+        post: like.post,
+      });
       if (response.deletedCount > 0) {
         await this.postModel.findByIdAndUpdate(
           {
@@ -182,10 +192,7 @@ export class PostsService {
           },
         );
 
-        return {
-          status: HttpStatus.OK,
-          data: like,
-        };
+        return like;
       }
     } else {
       const user: UserDocument = await this.usersService.findOneUserById(
@@ -194,17 +201,13 @@ export class PostsService {
 
       const like: LikeDocument = await this.likeModel.create({
         user: user.id,
+        post: post.id,
       });
 
       post.likes.push(like);
       await post.save();
 
-      const response = await like.populate('user', '-password');
-
-      return {
-        status: HttpStatus.CREATED,
-        data: response,
-      };
+      return like;
     }
   }
 }
