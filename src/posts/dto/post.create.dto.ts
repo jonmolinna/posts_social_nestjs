@@ -11,3 +11,8 @@ export class CreatePostDto {
   comment?: string;
   user: ObjectId;
 }
+
+export class deletePostDto {
+  user: ObjectId;
+  post: ObjectId;
+}

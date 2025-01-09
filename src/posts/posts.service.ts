@@ -1,7 +1,12 @@
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Post, PostDocument } from 'src/schemas/post.schema';
-import { CreatePostDto } from './dto/post.create.dto';
+import { CreatePostDto, deletePostDto } from './dto/post.create.dto';
 import { BookMarkDto } from 'src/bookmark/dto/bookMark.create.dto';
 import { BookMark, BookMarkDocument } from 'src/schemas/bookmark.schema';
 import { Comment, CommentDocument } from 'src/schemas/comment.schema';
@@ -11,6 +16,7 @@ import { UserDocument } from 'src/schemas/user.schema';
 import { CommentDto, deleteCommentDto } from 'src/comment/dto/comment.dto';
 import { LikeDto } from 'src/likes/dto/like.dto';
 import { Like, LikeDocument } from 'src/schemas/like.schema';
+import { error } from 'console';
 
 @Injectable()
 export class PostsService {
@@ -23,7 +29,10 @@ export class PostsService {
   ) {}
 
   async addPost(createPostDto: CreatePostDto): Promise<Post> {
-    return this.postModel.create(createPostDto);
+    // return this.postModel.create(createPostDto);
+    const post = await this.postModel.create(createPostDto);
+    const result = await post.populate('user', '-password');
+    return result;
   }
 
   async findOnePostById(id: ObjectId): Promise<Post | any> {
@@ -109,16 +118,17 @@ export class PostsService {
     const comment: CommentDocument = await this.commentModel.create({
       comment: dto.comment,
       user: user.id,
+      post: post.id,
     });
 
     post.comments.push(comment);
     await post.save();
 
-    const response = await comment.populate('user', '-password');
-    return {
-      status: HttpStatus.CREATED,
-      data: response,
-    };
+    return await comment.populate('user', '-password');
+    // return {
+    //   status: HttpStatus.CREATED,
+    //   data: response,
+    // };
   }
 
   async deleteComment(dto: deleteCommentDto) {
@@ -128,17 +138,20 @@ export class PostsService {
       throw new NotFoundException('No se encontro el post');
     }
 
-    const comment: CommentDocument = await this.commentModel.findById(
-      dto.comment,
-    );
+    const comment: CommentDocument = await this.commentModel.findOne({
+      post: dto.post,
+      user: dto.user,
+      _id: dto.comment,
+    });
 
     if (!comment) {
       throw new NotFoundException('No se encontro el comentario');
     }
 
     const response = await this.commentModel.deleteOne({
-      _id: dto.comment,
+      _id: comment._id,
       user: dto.user,
+      post: comment.post,
     });
 
     if (response.deletedCount > 0) {
@@ -155,10 +168,18 @@ export class PostsService {
         },
       );
 
-      return {
-        status: HttpStatus.OK,
-        data: comment,
-      };
+      return await comment.populate('user', '-password');
+    } else {
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error Server',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
@@ -208,6 +229,48 @@ export class PostsService {
       await post.save();
 
       return like;
+    }
+  }
+
+  async deletePost(dto: deletePostDto) {
+    const post = await this.postModel.findOne({
+      _id: dto.post,
+      user: dto.user,
+    });
+
+    if (!post) {
+      throw new HttpException(
+        {
+          status: HttpStatus.NOT_FOUND,
+          error: 'Post not found',
+        },
+        HttpStatus.NOT_FOUND,
+        {
+          cause: error,
+        },
+      );
+    }
+
+    const response = await this.postModel.deleteOne({
+      _id: post._id,
+      user: dto.user,
+    });
+
+    if (response.deletedCount > 0) {
+      console.log('----->', post._id);
+
+      return post._id;
+    } else {
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'Error Server',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          cause: error,
+        },
+      );
     }
   }
 }

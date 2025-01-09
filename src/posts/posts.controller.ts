@@ -7,6 +7,9 @@ import {
   Request,
   Get,
   Param,
+  HttpException,
+  HttpStatus,
+  Delete,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
@@ -42,11 +45,29 @@ export class PostsController {
 
   @Get('posts')
   async allPostss() {
-    return this.postService.allPosts();
+    return await this.postService.allPosts();
   }
 
   @Get(':idPost')
   async getOnePostById(@Param('idPost', ParseObjectIdPipe) id: ObjectId) {
-    return this.postService.findOnePostById(id);
+    const post = await this.postService.findOnePostById(id);
+    if (post) {
+      return post;
+    }
+
+    throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
+  }
+
+  @Delete('/:idPost')
+  async deletePostUserById(
+    @Param('idPost', ParseObjectIdPipe) id: ObjectId,
+    @Request() req,
+  ) {
+    const response = this.postService.deletePost({
+      user: req.user._id,
+      post: id,
+    });
+
+    return response;
   }
 }
