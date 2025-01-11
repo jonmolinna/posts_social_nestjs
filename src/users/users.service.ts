@@ -27,4 +27,8 @@ export class UsersService {
   async findOneUserById(id: ObjectId): Promise<userInterface | any> {
     return await this.userModel.findById(id);
   }
+
+  async getAllUsers(): Promise<userInterface[]> {
+    return await this.userModel.find().select('-password');
+  }
 }

@@ -13,6 +13,7 @@ import { UsersService } from './users.service';
 import { Public } from 'src/auth/decorator/public.decorator';
 import { ObjectId } from 'mongoose';
 import { UserDocument } from 'src/schemas/user.schema';
+import { userInterface } from './interface/user.interface';
 
 @Controller('users')
 export class UsersController {
@@ -64,5 +65,10 @@ export class UsersController {
       username: user.username,
       createdAt: user.createdAt,
     };
+  }
+
+  @Get('/users')
+  async getAllUsers(): Promise<userInterface[]> {
+    return this.usersService.getAllUsers();
   }
 }
