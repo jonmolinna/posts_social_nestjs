@@ -13,6 +13,6 @@ async function bootstrap() {
   // app.useGlobalFilters(new HttpExceptionFilter());
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
-  await app.listen(9000);
+  await app.listen(process.env.PORT || 9000);
 }
 bootstrap();
